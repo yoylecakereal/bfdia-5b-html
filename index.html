@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>BFDIA 5b</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#000000">
   <!-- Load local Ruffle build placed next to this HTML (ruffle.js) -->
   <script src="ruffle.js"></script>
@@ -384,7 +384,7 @@
     // Register service worker to enable PWA offline behavior and installability.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/service-worker.js').then(function (reg) {
+        navigator.serviceWorker.register('service-worker.js').then(function (reg) {
           // Successful registration
           console.log('ServiceWorker registration succeeded:', reg.scope);
         }, function (err) {
@@ -395,3 +395,4 @@
   </script>
 </body>
 </html>
+
