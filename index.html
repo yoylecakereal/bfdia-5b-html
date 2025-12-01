@@ -156,7 +156,7 @@
 
     #mobile-controls { position: fixed; inset: auto 1rem 1rem 1rem; z-index: 9999; pointer-events: auto; }
     /* Move D-pad up so it does not overlap on-screen level text; use viewport-based offset */
-    .controls-left { position: fixed; left: calc(env(safe-area-inset-left, 0px) + 1rem); bottom: calc(env(safe-area-inset-bottom, 0px) + 6vh); }
+    .controls-left { position: fixed; left: calc(env(safe-area-inset-left, 0px) + 1rem); bottom: calc(env(safe-area-inset-bottom, 0px) + 14vh); }
     .controls-right { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 1rem); top: 1rem; bottom: 1rem; pointer-events: none; }
 
     /* D-pad arranged with up button above left/right; sizes derived from --btn-size */
@@ -172,7 +172,7 @@
     .btn.large { width: calc(var(--btn-size) * var(--btn-large-mult)); height: calc(var(--btn-size) * var(--btn-large-mult)); font-size: calc(var(--btn-size) * 0.56); border-radius: calc(var(--btn-size) * 0.14); }
     .enter-top { position: fixed; top: 1rem; right: 1rem; width: var(--enter-width); height: var(--enter-height); font-size: calc(var(--enter-height) * 0.45); border-radius: calc(var(--enter-height) * 0.14); pointer-events: auto; }
 
-    .actions-bottom { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 1rem); bottom: calc(env(safe-area-inset-bottom, 0px) + 6vh); display:flex; gap: var(--ctrl-gap); pointer-events: auto; flex-direction: row-reverse; align-items: flex-end; }
+    .actions-bottom { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 1rem); bottom: calc(env(safe-area-inset-bottom, 0px) + 14vh); display:flex; gap: var(--ctrl-gap); pointer-events: auto; flex-direction: row-reverse; align-items: flex-end; }
 
     .btn:active, .btn.active { transform: scale(0.96); background: rgba(255,255,255,0.06); }
 
