@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>BFDIA 5b</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#000000">
   <!-- Load local Ruffle build placed next to this HTML (ruffle.js) -->
   <script src="ruffle.js"></script>
   <style>
@@ -44,6 +46,9 @@
   <!-- Container for the SWF -->
   <div id="game"></div>
 
+  <!-- Toggle to hide/show mobile controls (always visible, top-left) -->
+  <button id="mobile-toggle" aria-pressed="true" aria-label="Toggle mobile controls" title="Toggle mobile controls">✕</button>
+
   <!-- Mobile controls (always visible) - updated layout matching screenshot -->
   <div id="mobile-controls" aria-hidden="false">
     <!-- Left D-Pad: up above, left and right below -->
@@ -62,7 +67,12 @@
 
       <div class="actions-bottom">
         <button class="btn action large jump" data-key=" " data-keycode="32" aria-label="Jump">▲</button>
-        <button class="btn action large" data-key="z" data-keycode="90" aria-label="Swap">Z</button>
+
+        <div class="stack-up">
+          <button class="btn action large up-g" data-key="ArrowUp" data-keycode="38" aria-label="Up (G)">G</button>
+          <button class="btn action large" data-key="z" data-keycode="90" aria-label="Swap">Z</button>
+        </div>
+
         <button class="btn action large" data-key="r" data-keycode="82" aria-label="Reset">R</button>
       </div>
     </div>
@@ -78,7 +88,35 @@
 
       const ruffle = window.RufflePlayer.newest();
       const player = ruffle.createPlayer();
+      // Ensure the player can receive focus for keyboard events from touch controls
+      player.setAttribute('tabindex', '0');
       document.getElementById("game").appendChild(player);
+      // Make sure the player element is focusable via script when needed
+      try { player.tabIndex = 0; } catch (e) { /* ignore */ }
+      
+        // Mobile controls toggle behavior: keep toggle always visible and persist state
+        (function () {
+          const KEY = 'mobileControlsVisible';
+          const toggle = document.getElementById('mobile-toggle');
+          const controls = document.getElementById('mobile-controls');
+          if (!toggle) return;
+
+          function setVisible(visible) {
+            if (controls) controls.style.display = visible ? '' : 'none';
+            toggle.setAttribute('aria-pressed', visible ? 'true' : 'false');
+            toggle.title = visible ? 'Hide mobile controls' : 'Show mobile controls';
+            toggle.innerText = visible ? '✕' : '☰';
+            try { localStorage.setItem(KEY, visible ? '1' : '0'); } catch (e) { /* ignore */ }
+          }
+
+          // Initialize from storage (default: visible)
+          let stored = null;
+          try { stored = localStorage.getItem(KEY); } catch (e) { stored = null; }
+          const visible = stored === null ? true : (stored === '1');
+          setVisible(visible);
+
+          toggle.addEventListener('click', function (e) { e.preventDefault(); setVisible(toggle.getAttribute('aria-pressed') !== 'true'); });
+        })();
 
       // Load the SWF file (must be in same folder as HTML)
       player.load("5b.swf");
@@ -116,11 +154,23 @@
         if (!controls) return;
 
         function sendKey(type, key, keyCode, code) {
+          // Try to focus the Ruffle player (or its internal canvas) so it receives keyboard events
+          try {
+            if (player && typeof player.focus === 'function') player.focus();
+            // If the player hosts a canvas (Ruffle typically does), focus that too
+            const canvas = player && player.querySelector ? player.querySelector('canvas') : null;
+            if (canvas && typeof canvas.focus === 'function') canvas.focus();
+          } catch (err) { /* ignore focus errors */ }
+
           const eventInit = { key: key, code: code || key, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true };
           let ev;
           try { ev = new KeyboardEvent(type, eventInit); }
           catch (err) { ev = document.createEvent('KeyboardEvent'); ev.initKeyboardEvent(type, true, true, window, key, 0, '', false, ''); }
-          if (player && typeof player.dispatchEvent === 'function') player.dispatchEvent(ev);
+
+          // Deliver event to the most likely target: internal canvas -> player -> window
+          const canvas = player && player.querySelector ? player.querySelector('canvas') : null;
+          if (canvas && typeof canvas.dispatchEvent === 'function') canvas.dispatchEvent(ev);
+          else if (player && typeof player.dispatchEvent === 'function') player.dispatchEvent(ev);
           window.dispatchEvent(ev);
         }
 
@@ -130,6 +180,19 @@
           const code = btn.getAttribute('data-code') || key;
           function onPress(e) { e.preventDefault(); btn.classList.add('active'); sendKey('keydown', key, keyCode, code); }
           function onRelease(e) { e && e.preventDefault(); btn.classList.remove('active'); sendKey('keyup', key, keyCode, code); }
+          // When user touches controls for the first time, ensure the player is focused
+          const firstTouchHandler = function () {
+            try {
+              if (player && typeof player.focus === 'function') player.focus();
+              const canvas = player && player.querySelector ? player.querySelector('canvas') : null;
+              if (canvas && typeof canvas.focus === 'function') canvas.focus();
+            } catch (err) { /* ignore */ }
+            // remove this handler after first use
+            btn.removeEventListener('touchstart', firstTouchHandler);
+            btn.removeEventListener('mousedown', firstTouchHandler);
+          };
+          btn.addEventListener('touchstart', firstTouchHandler, {passive:false}); btn.addEventListener('mousedown', firstTouchHandler);
+
           btn.addEventListener('touchstart', onPress, {passive:false}); btn.addEventListener('mousedown', onPress);
           btn.addEventListener('touchend', onRelease); btn.addEventListener('touchcancel', onRelease); btn.addEventListener('mouseup', onRelease); btn.addEventListener('mouseleave', onRelease);
         }
@@ -152,6 +215,31 @@
       --enter-width: clamp(84px, 16vmin, 160px);
       --enter-height: clamp(44px, 9vmin, 96px);
     }
+
+    /* Toggle button in top-left to show/hide mobile controls */
+    #mobile-toggle {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 8px));
+      left: calc(env(safe-area-inset-left, 8px));
+      z-index: 10001;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      pointer-events: auto;
+    }
+
+    #mobile-toggle:focus { outline: 2px solid rgba(255,255,255,0.18); }
+
 
     #mobile-controls {
       position: fixed;
@@ -254,6 +342,22 @@
       transform: translateY(calc(-0.15 * var(--btn-size)));
     }
 
+    /* Stack G above Z in a column and match sizes */
+    .stack-up {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: calc(var(--ctrl-gap) * 0.4);
+      pointer-events: auto;
+    }
+    .stack-up .up-g {
+      /* reuse large action sizing so G matches Z */
+      width: calc(var(--btn-size) * var(--btn-large-mult));
+      height: calc(var(--btn-size) * var(--btn-large-mult));
+      font-size: calc(var(--btn-size) * 0.56);
+      border-radius: calc(var(--btn-size) * 0.14);
+    }
+
     .btn.jump {
       width: calc(var(--btn-size) * var(--btn-large-mult));
       height: calc(var(--btn-size) * var(--btn-large-mult));
@@ -276,5 +380,18 @@
       }
     }
 </style>
+  <script>
+    // Register service worker to enable PWA offline behavior and installability.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/service-worker.js').then(function (reg) {
+          // Successful registration
+          console.log('ServiceWorker registration succeeded:', reg.scope);
+        }, function (err) {
+          console.warn('ServiceWorker registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
