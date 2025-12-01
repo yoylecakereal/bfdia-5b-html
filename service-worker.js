@@ -1,12 +1,12 @@
 const CACHE_NAME = '5b-pwa-v1';
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/ruffle.js',
-  '/5b.swf',
-  '/levels.txt',
-  '/core.ruffle.0a7030ff7c360f6dee99.js',
-  '/core.ruffle.e760cff211bad8506805.js'
+  '/bfdia-5b-android/',
+  '/bfdia-5b-android/index.html',
+  '/bfdia-5b-android/ruffle.js',
+  '/bfdia-5b-android/5b.swf',
+  '/bfdia-5b-android/levels.txt',
+  '/bfdia-5b-android/core.ruffle.0a7030ff7c360f6dee99.js',
+  '/bfdia-5b-android/core.ruffle.e760cff211bad8506805.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -52,3 +52,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
